@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:house_electronics/data/roomDAO.dart';
 
@@ -6,10 +8,13 @@ import 'package:house_electronics/pages/roomPage.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatelessWidget {
+  Timer timer;
+
   @override
   Widget build(BuildContext context) {
     final List<Room> rooms = Provider.of<RoomList>(context).rooms;
-
+    timer ??= Timer.periodic(Duration(minutes: 1),
+        (Timer t) => Provider.of<RoomList>(context).updateWeather());
     return Scaffold(
         appBar: AppBar(
           centerTitle: true,

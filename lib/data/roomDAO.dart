@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:house_electronics/models/room.dart';
 import 'package:http/http.dart' as http;
 
@@ -81,15 +82,17 @@ class RoomList with ChangeNotifier {
   void updateWeather() async {
     http.Response res;
 
-    res = await http.get(Uri.encodeFull(url + "/weather/cold"),
+    res = await http.get(
+        Uri.encodeFull("https://www.metaweather.com/api/location/2165352/"),
         headers: {"Accept": "application/json"});
 
     if (res.statusCode == 200) {
-      Map<String, dynamic> data = json.decode(res.body);
+      String temp = res.body.substring(
+          res.body.indexOf("the_temp") + 11, res.body.indexOf("the_temp") + 13);
 
-      if (data["consolidated_weather"][0]["the_temp"] < 25) {
+      if (double.parse(temp) > 25.0) {
         _rooms.forEach((room) {
-          if (room.fixtures.contains("AC")) {
+          if (room.fixtureStates.containsKey("AC")) {
             room.fixtureStates["AC"] = true;
           }
         });
