@@ -22,7 +22,7 @@ class RoomPage extends StatelessWidget {
         itemBuilder: (context, i) {
           return SwitchListTile(
             title: Text(room.fixtures[i]),
-            value: true,
+            value: room.fixtureStates[room.fixtures[i]],
             onChanged: (state) {
               Provider.of<RoomList>(context)
                   .updateFixture(room.name, room.fixtures[i], state);

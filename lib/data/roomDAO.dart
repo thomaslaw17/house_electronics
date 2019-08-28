@@ -38,27 +38,62 @@ class RoomList with ChangeNotifier {
 
       List<String> rest = data["rooms"].keys.toList();
 
-      _rooms = rest
-          .map<Room>((key) => Room.fromJson(key, data["rooms"][key]))
-          .toList();
+      _rooms = rest.map<Room>((roomName) {
+        Map<dynamic, bool> states = Map<dynamic, bool>();
+
+        data["rooms"][roomName]["fixtures"].forEach((fixture) {
+          states[fixture] = false;
+        });
+
+        return Room.fromJson(roomName, data["rooms"][roomName], states);
+      }).toList();
     }
+
     updateIsLoading(false);
   }
 
   void updateFixture(String roomName, String fixture, bool state) async {
     updateIsLoading(true);
+
     http.Response res;
 
+    _rooms.forEach((room) {
+      if (room.name == roomName) {
+        room.fixtureStates[fixture] = state;
+      }
+    });
+
+    notifyListeners();
+
     if (state) {
-      res = await http
-          .get(Uri.encodeFull(url + roomName + "/" + fixture + "/on"));
+      res = await http.get(Uri.encodeFull(
+          url + roomName.toLowerCase() + "/" + fixture.toLowerCase() + "/on"));
     } else {
-      res = await http
-          .get(Uri.encodeFull(url + roomName + "/" + fixture + "/off"));
+      res = await http.get(Uri.encodeFull(
+          url + roomName.toLowerCase() + "/" + fixture.toLowerCase() + "/off"));
     }
 
-    if (res.statusCode == 200) {}
+    if (res.statusCode == 200 && res.body == "true") {
+      updateIsLoading(false);
+    }
+  }
 
-    updateIsLoading(false);
+  void updateWeather() async {
+    http.Response res;
+
+    res = await http.get(Uri.encodeFull(url + "/weather/cold"),
+        headers: {"Accept": "application/json"});
+
+    if (res.statusCode == 200) {
+      Map<String, dynamic> data = json.decode(res.body);
+
+      if (data["consolidated_weather"][0]["the_temp"] < 25) {
+        _rooms.forEach((room) {
+          if (room.fixtures.contains("AC")) {
+            room.fixtureStates["AC"] = true;
+          }
+        });
+      }
+    }
   }
 }
